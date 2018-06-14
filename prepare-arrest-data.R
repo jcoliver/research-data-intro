@@ -8,22 +8,16 @@ rm(list = ls())
 ################################################################################
 # SUMMARY
 # Data from https://www.datalumos.org/datalumos/project/101746/view
-# Removing rows where campus population is duplicated
-# Arrest data are better
-# TODO: Also need to remove rows where arrest values are duplicated
-# e.g. Michigan State University & Michigan State University-College of Law
-# BUT these aren't subsequent rows in the data set...
-# df[!(duplicated(df[c("c","d")]) | duplicated(df[c("c","d")], fromLast = TRUE)), ]
-# TODO: Drop all that have no value in State column (international schools)
 
 # Set file names
 input.file <- "data/oncampusarrest131415.csv"
 output.file <- "data/oncampusarrest131415-clean.csv"
-# input.file <- "data/oncampusdiscipline131415.csv"
-# output.file <- "data/oncampusdiscipline131415-clean.csv"
 
 # Read original data from file
 campus.data <- read.csv(file = input.file)
+
+# International schools have empty string in the State column (and we don't want them)
+campus.data <- campus.data[campus.data$State != "", ]
 
 # Base drop decision on identical rows in these three columns
 cols.to.compare <- c("men_total", "women_total", "Total")
@@ -43,7 +37,12 @@ for (i in 2:nrow(campus.data)) {
     drop.rows[i] <- TRUE
   }
 }
+clean.campus.data <- campus.data[!drop.rows, ]
+
+# Drop two more troublesome institutions, University of Phoenix-Arizona and Michigan 
+# State University-College of Law; the latter has crime stats for the main campus
+drop.INSTNM <- c("University of Phoenix-Arizona", "Michigan State University-College of Law")
+clean.campus.data <- clean.campus.data[!(clean.campus.data$INSTNM %in% drop.INSTNM), ]
 
 # Make final data set and save to file
-clean.campus.data <- campus.data[!drop.rows, ]
 write.csv(x = clean.campus.data, file = output.file, quote = TRUE, row.names = FALSE)
